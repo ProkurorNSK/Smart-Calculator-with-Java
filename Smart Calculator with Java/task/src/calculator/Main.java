@@ -15,6 +15,9 @@ public class Main {
             else if (text.equals("/help")) {
                 System.out.println("The program calculates the sum of numbers");
             } else {
+                text = text.replaceAll("\\+\\+|--", "");
+                text = text.replaceAll("-\\s+", "-");
+                text = text.replaceAll("\\+\\s+", "+");
                 String[] numbers = text.split("\\s+");
                 int result = 0;
                 for (String element : numbers) {
