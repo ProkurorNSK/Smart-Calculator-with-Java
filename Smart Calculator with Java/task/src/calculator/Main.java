@@ -1,12 +1,13 @@
 package calculator;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class Main {
 
-    private static final Map<String, Integer> variables = new HashMap<>();
+    private static final Map<String, BigInteger> variables = new HashMap<>();
     private static final List<Element> postfix = new ArrayList<>();
     private static final List<Element> infix = new ArrayList<>();
 
@@ -49,12 +50,12 @@ public class Main {
             switch (element.type) {
                 case NUMBER, VARIABLE -> stack.push(element);
                 case BINARY_OPERATOR -> {
-                    int x = ((Number) stack.pop()).number;
-                    int y = ((Number) stack.pop()).number;
+                    BigInteger x = ((Number) stack.pop()).number;
+                    BigInteger y = ((Number) stack.pop()).number;
                     stack.push(new Number(Type.NUMBER, ((BinaryOperator) element).biOperator.apply(y, x)));
                 }
                 case UNARY_OPERATOR -> {
-                    int y = ((Number) stack.pop()).number;
+                    BigInteger y = ((Number) stack.pop()).number;
                     stack.push(new Number(Type.NUMBER, ((UnaryOperator) element).unOperator.apply(y)));
                 }
             }
@@ -114,7 +115,7 @@ public class Main {
             String assignment = parts[1];
             if (variable.matches("[A-Za-z]+")) {
                 if (assignment.matches("[-+]?\\d+")) {
-                    variables.put(variable, Integer.parseInt(assignment));
+                    variables.put(variable, new BigInteger(assignment));
                 } else if (!assignment.matches("[A-Za-z]+")) {
                     throw new CalculatorException("Invalid assignment");
                 } else if (variables.containsKey(assignment)) {
@@ -140,35 +141,31 @@ public class Main {
                     token = "";
                     currentType = Type.BINARY_OPERATOR;
                     int priority = 0;
-                    BiFunction<Integer, Integer, Integer> function = null;
+                    BiFunction<BigInteger, BigInteger, BigInteger> function = null;
                     switch (ch) {
                         case '+' -> {
-                            function = Integer::sum;
+                            function = BigInteger::add;
                             priority = 1;
                         }
                         case '-' -> {
-                            function = (x, y) -> x - y;
+                            function = BigInteger::subtract;
                             priority = 1;
                         }
                         case '*' -> {
-                            function = (x, y) -> x * y;
+                            function = BigInteger::multiply;
                             priority = 2;
                         }
                         case '/' -> {
-                            function = (x, y) -> x / y;
+                            function = BigInteger::divide;
                             priority = 2;
-                        }
-                        case '^' -> {
-                            function = (x, y) -> (int) Math.pow(x, y);
-                            priority = 3;
                         }
                     }
                     infix.add(new BinaryOperator(currentType, priority, function, ch));
                 } else {
                     currentType = Type.UNARY_OPERATOR;
-                    Function<Integer, Integer> function = switch (ch) {
-                        case '+' -> x -> x;
-                        case '-' -> x -> -1 * x;
+                    Function<BigInteger, BigInteger> function = switch (ch) {
+                        case '+' -> Function.identity();
+                        case '-' -> BigInteger::negate;
                         default -> throw new CalculatorException("Invalid expression");
                     };
                     infix.add(new UnaryOperator(currentType, 4, function, ch));
@@ -215,7 +212,7 @@ public class Main {
         switch (type) {
             case NUMBER -> {
                 try {
-                    infix.add(new Number(type, Integer.parseInt(token)));
+                    infix.add(new Number(type, new BigInteger(token)));
                 } catch (NumberFormatException e) {
                     throw new CalculatorException("Invalid expression");
                 }
@@ -240,9 +237,9 @@ class Element {
 }
 
 class Number extends Element {
-    int number;
+    BigInteger number;
 
-    Number(Type type, int number) {
+    Number(Type type, BigInteger number) {
         super(type);
         this.number = number;
     }
@@ -256,7 +253,7 @@ class Number extends Element {
 class Variable extends Number {
     String variable;
 
-    Variable(Type type, int number, String variable) {
+    Variable(Type type, BigInteger number, String variable) {
         super(type, number);
         this.variable = variable;
     }
@@ -284,18 +281,18 @@ class Operator extends Element {
 }
 
 class BinaryOperator extends Operator {
-    BiFunction<Integer, Integer, Integer> biOperator;
+    BiFunction<BigInteger, BigInteger, BigInteger> biOperator;
 
-    BinaryOperator(Type type, int priority, BiFunction<Integer, Integer, Integer> biOperator, char symbol) {
+    BinaryOperator(Type type, int priority, BiFunction<BigInteger, BigInteger, BigInteger> biOperator, char symbol) {
         super(type, priority, symbol);
         this.biOperator = biOperator;
     }
 }
 
 class UnaryOperator extends Operator {
-    Function<Integer, Integer> unOperator;
+    Function<BigInteger, BigInteger> unOperator;
 
-    UnaryOperator(Type type, int priority, Function<Integer, Integer> unOperator, char symbol) {
+    UnaryOperator(Type type, int priority, Function<BigInteger, BigInteger> unOperator, char symbol) {
         super(type, priority, symbol);
         this.unOperator = unOperator;
     }
