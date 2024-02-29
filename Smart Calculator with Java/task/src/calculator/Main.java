@@ -221,7 +221,7 @@ public class Main {
                 if (variables.containsKey(token)) {
                     infix.add(new Variable(type, variables.get(token), token));
                 } else {
-                    throw new CalculatorException("Invalid expression");
+                    throw new CalculatorException("Unknown variable");
                 }
             }
         }
